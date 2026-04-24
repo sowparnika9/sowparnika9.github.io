@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Part II | D3 Map</title>
+
+<!-- Load D3 -->
+<script src="https://d3js.org/d3.v5.min.js"></script>
+<script src="https://rshepard2.github.io/Lab9/data/lnkrds.js"></script>
+<script src="https://rshepard2.github.io/Lab9/data/northeast_lnk_blds.js"></script>
+
+<style>
+body {
+  position: absolute;
+  font-family: "Proxima Nova", "Montserrat", sans-serif;
+}
+
+h1, h2 {
+  position: absolute;
+  background: white;
+  left: 10px;
+  font-size: 1.3em;
+  font-weight: 100;
+}
+
+h2 {
+  top: 30px;
+  font-size: 1em;
+}
+
+.hover {
+  fill: yellow;
+}
+
+svg {
+  background-color: #f5f5f5;
+}
+</style>
+
+</head>
+
+<body>
+
+<h1>New vs Old Homes in Northeast Lincoln</h1>
+<h2></h2>
+
+<script>
+
+// ----------------------
+// 1. Set dimensions
+// ----------------------
+var width = 1000;
+var height = 600;
+
+// ----------------------
+// 2. Create SVG
+// ----------------------
+var svg = d3.select("body")
+  .append("svg")
+  .attr("width", width)
+  .attr("height", height);
+
+var g = svg.append("g");
+
+// ----------------------
+// 3. Projection
+// ----------------------
+var albersProjection = d3.geoAlbers()
+  .scale(2850000)
+  .rotate([96.6327, 0])
+  .center([0, 40.8497493])
+  .translate([width/2, height/2]);
+
+// ----------------------
+// 4. GeoPath
+// ----------------------
+var geoPath = d3.geoPath()
+  .projection(albersProjection);
+
+// ----------------------
+// 5. Roads layer
+// ----------------------
+g.selectAll("path")
+  .data(lnkrds.features)
+  .enter()
+  .append("path")
+  .attr("fill", "none")
+  .attr("stroke", "#555")
+  .attr("stroke-width", 0.5)
+  .attr("d", geoPath);
+
+// ----------------------
+// 6. Buildings layer (UPDATED)
+// ----------------------
+var lnk_json = svg.append("g");
+
+lnk_json.selectAll("path")
+  .data(lnkbldngsjson.features)
+  .enter()
+  .append("path")
+  .attr("fill", function(d) {
+    if (d.properties.RESYRBLT >= 2000) {
+      return "#2ca25f"; // newer homes (green)
+    } else {
+      return "#de2d26"; // older homes (red)
+    }
+  })
+  .attr("stroke", "#333")
+  .attr("d", geoPath)
+  .attr("class","buildingdata")
+
+  // Hover interaction
+  .on("mouseover", function(d){
+    if (d.properties.RESYRBLT >= 2000) {
+      d3.select("h2").text("New Home (Built " + d.properties.RESYRBLT + ")");
+    } else {
+      d3.select("h2").text("Older Home (Built " + d.properties.RESYRBLT + ")");
+    }
+    d3.select(this).attr("class","buildingdata hover");
+  })
+
+  .on("mouseout", function(d){
+    d3.select("h2").text("");
+    d3.select(this).attr("class","buildingdata");
+  })
+
+  // Click interaction
+  .on("click", function(d){
+    alert("This home was built in " + d.properties.RESYRBLT);
+  });
+
+</script>
+
+</body>
+</html>
